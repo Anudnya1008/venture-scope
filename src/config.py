@@ -1,7 +1,3 @@
-"""
-config.py — Shared Gemini client and model name.
-Imported by main.py, agents.py, benchmark.py — single source of truth.
-"""
 import os
 from dotenv import load_dotenv
 from google import genai

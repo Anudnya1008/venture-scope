@@ -74,7 +74,6 @@ def _bucket_geography(c):
 def build():
     print(f" Loading raw Crunchbase tables from {RAW_DIR}\n")
  
-    # ─── objects.csv ───
     objects = pd.read_csv(os.path.join(RAW_DIR, "objects.csv"), low_memory=False)
     print(f"   objects.csv:        {len(objects):,} rows")
     companies = objects[objects["entity_type"] == "Company"].copy()

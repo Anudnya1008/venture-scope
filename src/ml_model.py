@@ -55,7 +55,6 @@ def load_medians(sector: str = None) -> dict:
                 for f in NUMERIC_FEATURES if f in sector_df.columns
             }
 
-    # Prefer sector-specific medians when available
     if sector and sector in _medians_cache:
         return _medians_cache[sector]
     return _medians_cache.get("_global", {})

@@ -4,6 +4,14 @@ import tempfile
 import streamlit as st
 from pipeline import run_pipeline
 
+@st.cache_data(show_spinner=False)
+def cached_pipeline(pdf_bytes, csv_path):
+    import tempfile
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(pdf_bytes)
+        tmp_path = tmp.name
+    return run_pipeline(tmp_path, csv_path)
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 CSV_PATH = os.path.join(ROOT, "dataset", "startup_success_dataset.csv")
@@ -13,7 +21,7 @@ st.set_page_config(page_title="Venture Scope", page_icon="📊", layout="wide")
 st.markdown("""
 <style>
 .metric-card{padding:32px 24px;border-radius:12px;text-align:center;color:white;}
-.metric-value{font-size:28px;font-weight:700;}   /* was 24px */.metric-label{font-size:14px;opacity:.9;margin-bottom:8px;}
+.metric-label{font-size:14px;opacity:.9;margin-bottom:8px;}
 .metric-value{font-size:24px;font-weight:700;}
 .green-card{background:linear-gradient(135deg,#2d6a4f,#40916c);}
 .blue-card{background:linear-gradient(135deg,#1d4e89,#2980b9);}
@@ -64,14 +72,14 @@ if results and "error" not in results:
     facts = results["facts"]
     bull, bear = results["bull"], results["bear"]
     verdict, vit = results["verdict"], results["vitality"]
-    ml, rec = results["ml"], results["reconciliation"]
+    ml = results["ml"]
+
 
     st.markdown(f"### {facts.get('startup_name', '?')}")
     st.caption(f"**Industry:** {facts.get('industry', '—')}   •   "
                f"**Business model:** {facts.get('business_model', '—')}   •   "
                f"**Sector:** {facts.get('csv_features', {}).get('sector', '—')}")
 
-    # ── 4 metric cards ──
     c1, c2, c3 = st.columns(3)
     c1.markdown(f"""<div class="metric-card green-card">
         <div class="metric-label">Vitality Score</div>
@@ -103,13 +111,11 @@ if results and "error" not in results:
         if funding:
             st.markdown(f"**Funding**  \n{funding}")
 
-    st.markdown("### 🧠 Reasoning")
-    if rec["agreement"] == "DISAGREE":
-        st.markdown(f"<div class='disagree'>{rec['explanation']}</div>",
-                    unsafe_allow_html=True)
-    elif rec["agreement"] == "AGREE":
-        st.markdown(f"<div class='agree'>✓ {rec['explanation']}</div>",
-                    unsafe_allow_html=True)
+    if ml:
+        ml_positive = ml["success_probability"] > 50
+        agents_positive = len(bull.get("green_flags", [])) > len(bear.get("red_flags", []))
+        if ml_positive != agents_positive:
+            st.warning("ML model and agents disagree, review carefully before deciding.")
 
     if ml:
         with st.expander("🤖 ML Model Details"):
